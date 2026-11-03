@@ -1,0 +1,7 @@
+{
+  "name": "caverna",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
