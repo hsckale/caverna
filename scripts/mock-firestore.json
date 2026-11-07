@@ -1,0 +1,280 @@
+{
+  "authUsers": [
+    { "uidToken": "ADMIN_UID", "email": "admin.demo@example.test", "displayName": "Admin Demonstração (mock)" },
+    { "uidToken": "STUDENT_01_UID", "email": "marina.demo@example.test", "displayName": "Marina Costa (demo)" },
+    { "uidToken": "STUDENT_02_UID", "email": "rafael.demo@example.test", "displayName": "Rafael Nunes (demo)" },
+    { "uidToken": "STUDENT_03_UID", "email": "joao.demo@example.test", "displayName": "João Pedro (demo)" }
+  ],
+  "gym": {
+    "id": "caverna-sp-demo",
+    "data": {
+      "name": "Caverna Jiu-Jitsu — São Paulo",
+      "address": "São Paulo, SP",
+      "logoUrl": "",
+      "timezone": "America/Sao_Paulo",
+      "active": true,
+      "ownerId": "{{ADMIN_UID}}",
+      "seededBy": "caverna-mock-v1"
+    }
+  },
+  "collections": {
+    "student_profiles": [
+      {
+        "id": "{{STUDENT_01_UID}}",
+        "data": {
+          "userId": "{{STUDENT_01_UID}}",
+          "gymId": "caverna-sp-demo",
+          "beltId": "caverna-sp-demo_faixa-azul",
+          "beltName": "Faixa azul",
+          "stripes": 2,
+          "startDate": "2024-02-12T12:00:00.000Z",
+          "totalClasses": 0,
+          "totalMatMinutes": 0,
+          "financialStatus": "current",
+          "planId": "demo-plano-mensal"
+        }
+      },
+      {
+        "id": "{{STUDENT_02_UID}}",
+        "data": {
+          "userId": "{{STUDENT_02_UID}}",
+          "gymId": "caverna-sp-demo",
+          "beltId": "caverna-sp-demo_faixa-branca",
+          "beltName": "Faixa branca",
+          "stripes": 3,
+          "startDate": "2025-08-03T12:00:00.000Z",
+          "totalClasses": 0,
+          "totalMatMinutes": 0,
+          "financialStatus": "pending",
+          "planId": "demo-plano-mensal"
+        }
+      },
+      {
+        "id": "{{STUDENT_03_UID}}",
+        "data": {
+          "userId": "{{STUDENT_03_UID}}",
+          "gymId": "caverna-sp-demo",
+          "beltId": "caverna-sp-demo_faixa-branca",
+          "beltName": "Faixa branca",
+          "stripes": 1,
+          "startDate": "2026-03-20T12:00:00.000Z",
+          "totalClasses": 0,
+          "totalMatMinutes": 0,
+          "financialStatus": "current",
+          "planId": "demo-plano-mensal"
+        }
+      }
+    ],
+    "users": [
+      {
+        "id": "{{ADMIN_UID}}",
+        "data": {
+          "name": "Admin Demonstração (mock)",
+          "email": "admin.demo@example.test",
+          "phone": "",
+          "photoUrl": "",
+          "role": "admin",
+          "gymId": "caverna-sp-demo",
+          "status": "active"
+        }
+      },
+      {
+        "id": "{{STUDENT_01_UID}}",
+        "data": {
+          "name": "Marina Costa (demo)",
+          "email": "marina.demo@example.test",
+          "phone": "",
+          "photoUrl": "",
+          "role": "student",
+          "gymId": "caverna-sp-demo",
+          "status": "active"
+        }
+      },
+      {
+        "id": "{{STUDENT_02_UID}}",
+        "data": {
+          "name": "Rafael Nunes (demo)",
+          "email": "rafael.demo@example.test",
+          "phone": "",
+          "photoUrl": "",
+          "role": "student",
+          "gymId": "caverna-sp-demo",
+          "status": "active"
+        }
+      },
+      {
+        "id": "{{STUDENT_03_UID}}",
+        "data": {
+          "name": "João Pedro (demo)",
+          "email": "joao.demo@example.test",
+          "phone": "",
+          "photoUrl": "",
+          "role": "student",
+          "gymId": "caverna-sp-demo",
+          "status": "active"
+        }
+      }
+    ],
+    "belts": [
+      {
+        "id": "caverna-sp-demo_faixa-branca",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "Faixa branca",
+          "order": 1,
+          "colorHex": "#F5F5F5",
+          "minMonths": 0,
+          "minClasses": 0,
+          "minMatMinutes": 0,
+          "active": true
+        }
+      },
+      {
+        "id": "caverna-sp-demo_faixa-azul",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "Faixa azul",
+          "order": 2,
+          "colorHex": "#2563EB",
+          "minMonths": 12,
+          "minClasses": 100,
+          "minMatMinutes": 6000,
+          "active": true
+        }
+      },
+      {
+        "id": "caverna-sp-demo_faixa-roxa",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "Faixa roxa",
+          "order": 3,
+          "colorHex": "#7C3AED",
+          "minMonths": 24,
+          "minClasses": 200,
+          "minMatMinutes": 12000,
+          "active": true
+        }
+      },
+      {
+        "id": "caverna-sp-demo_faixa-marrom",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "Faixa marrom",
+          "order": 4,
+          "colorHex": "#92400E",
+          "minMonths": 36,
+          "minClasses": 300,
+          "minMatMinutes": 18000,
+          "active": true
+        }
+      },
+      {
+        "id": "caverna-sp-demo_faixa-preta",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "Faixa preta",
+          "order": 5,
+          "colorHex": "#171717",
+          "minMonths": 48,
+          "minClasses": 400,
+          "minMatMinutes": 24000,
+          "active": true
+        }
+      }
+    ],
+    "classes": [
+      {
+        "id": "demo-aula-fundamentos",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "Jiu-Jitsu — Fundamentos",
+          "modality": "Gi",
+          "level": "Todos os níveis",
+          "teacherId": "{{ADMIN_UID}}",
+          "startTime": "19:00",
+          "endTime": "20:00",
+          "active": true
+        }
+      },
+      {
+        "id": "demo-aula-nogi",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "No-Gi — Técnicas e rolas",
+          "modality": "No-Gi",
+          "level": "Intermediário",
+          "teacherId": "{{ADMIN_UID}}",
+          "startTime": "20:15",
+          "endTime": "21:15",
+          "active": true
+        }
+      }
+    ],
+    "class_sessions": [
+      {
+        "id": "demo-sessao-fundamentos",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "classId": "demo-aula-fundamentos",
+          "className": "Jiu-Jitsu — Fundamentos",
+          "teacherId": "{{ADMIN_UID}}",
+          "date": "{{TOMORROW}}",
+          "startTime": "19:00",
+          "endTime": "20:00",
+          "status": "open"
+        }
+      },
+      {
+        "id": "demo-sessao-nogi",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "classId": "demo-aula-nogi",
+          "className": "No-Gi — Técnicas e rolas",
+          "teacherId": "{{ADMIN_UID}}",
+          "date": "{{TOMORROW}}",
+          "startTime": "20:15",
+          "endTime": "21:15",
+          "status": "open"
+        }
+      }
+    ],
+    "announcements": [
+      {
+        "id": "demo-comunicado-boas-vindas",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "title": "Bem-vindo à Caverna!",
+          "message": "Este é um ambiente de demonstração. Explore as aulas, acompanhe sua evolução e venha treinar com a gente.",
+          "authorId": "{{ADMIN_UID}}",
+          "audience": "all",
+          "publishedAt": "{{NOW}}",
+          "active": true
+        }
+      }
+    ],
+    "products": [
+      {
+        "id": "demo-produto-rashguard",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "Rashguard Caverna (demo)",
+          "category": "Vestuário",
+          "price": 149.9,
+          "stock": 8,
+          "active": true
+        }
+      },
+      {
+        "id": "demo-produto-faixa",
+        "data": {
+          "gymId": "caverna-sp-demo",
+          "name": "Faixa branca (demo)",
+          "category": "Equipamento",
+          "price": 79.9,
+          "stock": 5,
+          "active": true
+        }
+      }
+    ]
+  }
+}

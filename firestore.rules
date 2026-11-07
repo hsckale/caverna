@@ -2,18 +2,203 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2026, 12, 3);
+    function signedIn() {
+      return request.auth != null;
     }
+
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function belongsTo(gymId) {
+      return signedIn() && userData().gymId == gymId && userData().status == 'active';
+    }
+
+    function hasRole(gymId, roles) {
+      return belongsTo(gymId) && userData().role in roles;
+    }
+
+    function isStaff(gymId) {
+      return hasRole(gymId, ['admin', 'teacher']);
+    }
+
+    function isAdmin(gymId) {
+      return hasRole(gymId, ['admin']);
+    }
+
+    function profileBelongsTo(uid, gymId) {
+      return exists(/databases/$(database)/documents/student_profiles/$(uid))
+        && get(/databases/$(database)/documents/student_profiles/$(uid)).data.gymId == gymId;
+    }
+
+    match /gyms/{gymId} {
+      allow get: if belongsTo(gymId);
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.active == true
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.gymId == gymId
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow update: if isAdmin(gymId)
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'address', 'logoUrl', 'timezone', 'active']);
+      allow delete: if false;
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isStaff(resource.data.gymId));
+      allow list: if signedIn() && isStaff(resource.data.gymId);
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'email', 'phone', 'photoUrl', 'role', 'gymId', 'status'])
+        && request.resource.data.status == 'active'
+        && ((request.resource.data.role == 'student'
+            && exists(/databases/$(database)/documents/gyms/$(request.resource.data.gymId)))
+          || (request.resource.data.role == 'admin'
+            && getAfter(/databases/$(database)/documents/gyms/$(request.resource.data.gymId)).data.ownerId == uid));
+      allow update: if signedIn() && (
+        (request.auth.uid == uid
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.gymId == resource.data.gymId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'photoUrl']))
+        || (isAdmin(resource.data.gymId)
+          && request.resource.data.gymId == resource.data.gymId
+          && (resource.data.role != 'admin' || request.resource.data.role == 'admin')
+          && request.resource.data.role in ['student', 'teacher', 'admin']));
+      allow delete: if false;
+    }
+
+    match /student_profiles/{uid} {
+      allow get, list: if signedIn() && (request.auth.uid == uid || isStaff(resource.data.gymId));
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.userId == uid
+        && getAfter(/databases/$(database)/documents/users/$(uid)).data.gymId == request.resource.data.gymId
+        && request.resource.data.totalClasses == 0
+        && request.resource.data.totalMatMinutes == 0;
+      allow update: if isAdmin(resource.data.gymId)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.gymId == resource.data.gymId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stripes', 'beltId', 'beltName', 'startDate']);
+      allow delete: if false;
+    }
+
+    match /classes/{classId} {
+      allow read: if belongsTo(resource.data.gymId);
+      allow create: if isStaff(request.resource.data.gymId)
+        && request.resource.data.teacherId == request.auth.uid;
+      allow update: if isStaff(resource.data.gymId)
+        && request.resource.data.gymId == resource.data.gymId;
+      allow delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /class_sessions/{sessionId} {
+      allow read: if belongsTo(resource.data.gymId);
+      allow create: if isStaff(request.resource.data.gymId)
+        && request.resource.data.teacherId == request.auth.uid
+        && get(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.gymId == request.resource.data.gymId
+        && request.resource.data.status == 'open';
+      allow update: if isStaff(resource.data.gymId)
+        && request.resource.data.gymId == resource.data.gymId
+        && request.resource.data.classId == resource.data.classId;
+      allow delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /attendances/{attendanceId} {
+      allow read: if belongsTo(resource.data.gymId)
+        && (resource.data.userId == request.auth.uid || isStaff(resource.data.gymId));
+      allow create: if belongsTo(request.resource.data.gymId)
+        && profileBelongsTo(request.resource.data.userId, request.resource.data.gymId)
+        && get(/databases/$(database)/documents/class_sessions/$(request.resource.data.sessionId)).data.gymId == request.resource.data.gymId
+        && get(/databases/$(database)/documents/class_sessions/$(request.resource.data.sessionId)).data.status == 'open'
+        && attendanceId == request.resource.data.sessionId + '_' + request.resource.data.userId
+        && ((request.resource.data.userId == request.auth.uid
+            && request.resource.data.source == 'self'
+            && request.resource.data.confirmedBy == request.auth.uid)
+          || (isStaff(request.resource.data.gymId)
+            && request.resource.data.source == 'teacher'
+            && request.resource.data.confirmedBy == request.auth.uid));
+      allow update, delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /graduations/{graduationId} {
+      allow read: if belongsTo(resource.data.gymId)
+        && (resource.data.userId == request.auth.uid || isStaff(resource.data.gymId));
+      allow create: if isAdmin(request.resource.data.gymId)
+        && profileBelongsTo(request.resource.data.userId, request.resource.data.gymId)
+        && request.resource.data.awardedBy == request.auth.uid;
+      allow update, delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /belts/{beltId} {
+      allow read: if belongsTo(resource.data.gymId);
+      allow create: if isAdmin(request.resource.data.gymId);
+      allow update: if isAdmin(resource.data.gymId) && request.resource.data.gymId == resource.data.gymId;
+      allow delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /payments/{paymentId} {
+      allow read: if belongsTo(resource.data.gymId)
+        && (resource.data.userId == request.auth.uid || isStaff(resource.data.gymId));
+      allow create: if isAdmin(request.resource.data.gymId)
+        && profileBelongsTo(request.resource.data.userId, request.resource.data.gymId)
+        && request.resource.data.status == 'pending';
+      allow update: if isAdmin(resource.data.gymId)
+        && request.resource.data.gymId == resource.data.gymId
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.amount == resource.data.amount
+        && request.resource.data.status in ['pending', 'paid'];
+      allow delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if belongsTo(resource.data.gymId)
+        && (resource.data.audience == 'all'
+          || (resource.data.audience == 'students' && userData().role == 'student')
+          || (resource.data.audience == 'staff' && userData().role in ['admin', 'teacher']));
+      allow create: if isStaff(request.resource.data.gymId)
+        && request.resource.data.authorId == request.auth.uid;
+      allow update: if isStaff(resource.data.gymId)
+        && request.resource.data.gymId == resource.data.gymId;
+      allow delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /products/{productId} {
+      allow read: if belongsTo(resource.data.gymId);
+      allow create: if isAdmin(request.resource.data.gymId);
+      allow update: if isAdmin(resource.data.gymId) && request.resource.data.gymId == resource.data.gymId;
+      allow delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /training_videos/{videoId} {
+      allow read: if belongsTo(resource.data.gymId);
+      allow create: if isStaff(request.resource.data.gymId)
+        && request.resource.data.authorId == request.auth.uid;
+      allow update: if isStaff(resource.data.gymId)
+        && request.resource.data.gymId == resource.data.gymId;
+      allow delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /orders/{orderId} {
+      allow read: if belongsTo(resource.data.gymId)
+        && (resource.data.userId == request.auth.uid || isStaff(resource.data.gymId));
+      allow create: if belongsTo(request.resource.data.gymId)
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'requested'
+        && request.resource.data.total > 0;
+      allow update: if isAdmin(resource.data.gymId)
+        && request.resource.data.gymId == resource.data.gymId
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.status in ['accepted', 'cancelled'];
+      allow delete: if isAdmin(resource.data.gymId);
+    }
+
+    match /order_items/{itemId} {
+      allow read: if belongsTo(resource.data.gymId)
+        && (resource.data.userId == request.auth.uid || isStaff(resource.data.gymId));
+      allow create: if belongsTo(request.resource.data.gymId)
+        && request.resource.data.userId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.userId == request.auth.uid;
+      allow update, delete: if isAdmin(resource.data.gymId);
+    }
+
   }
 }

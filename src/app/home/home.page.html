@@ -1,21 +1,1119 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title> Blank </ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <ng-template #pinIcon>
+    <svg viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        d="M24 44s14-13.2 14-24A14 14 0 0 0 10 20c0 10.8 14 24 14 24Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3.4"
+        stroke-linejoin="round"
+      />
+      <path d="M17.5 23.5a6.5 6.5 0 0 1 13 0Z" fill="currentColor" />
+    </svg>
+  </ng-template>
+  <ng-template #lockIcon>
+    <svg viewBox="0 0 48 48" aria-hidden="true">
+      <rect x="11" y="21" width="26" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="3" />
+      <path d="M16.5 21v-5a7.5 7.5 0 0 1 15 0v5" fill="none" stroke="currentColor" stroke-width="3" />
+      <path d="M24 29v5" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+    </svg>
+  </ng-template>
+  <ng-template #backIcon>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M20 12H5m6-6-6 6 6 6"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </ng-template>
+  <ng-template #eyeIcon>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+      />
+      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8" />
+    </svg>
+  </ng-template>
+  <ng-template #authAlerts>
+    @if (error) {
+    <div class="message error-message" role="alert">{{ error }}</div>
+    } @if (authTimedOut) {
+    <button class="btn-link retry-auth" type="button" (click)="retryAuth()">Tentar conectar novamente</button>
+    }
+  </ng-template>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>
-      Start with Ionic
-      <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a>
-    </p>
+  @if (loading) {
+  <div class="loading-screen">
+    <span class="brand-pin"><ng-container [ngTemplateOutlet]="pinIcon" /></span>
+    <p>Preparando seu tatame...</p>
   </div>
+  } @else if (!data) {
+  <main class="app-frame auth-frame">
+    @switch (authStep) { @case ('welcome') {
+    <section class="screen auth-welcome">
+      <div class="welcome-body">
+        <div class="welcome-mark" aria-hidden="true"><span>🥋</span></div>
+        <h1 class="display">Caverna Jiu-Jitsu</h1>
+        <p class="subtitle">
+          O wellhub do jiu-jiteiro. Treine em qualquer academia da rede, com graduação justa e reconhecida.
+        </p>
+        <ng-container [ngTemplateOutlet]="authAlerts" />
+      </div>
+      <div class="bottom-actions">
+        <button class="btn btn-primary" type="button" (click)="onboardingIndex = 0; goToAuth('onboarding')">
+          Criar conta
+        </button>
+        <button class="btn btn-outline" type="button" (click)="goToAuth('login')">Já tenho conta</button>
+      </div>
+    </section>
+    } @case ('onboarding') {
+    <section class="screen onboarding">
+      <div class="onboarding-body">
+        <div class="onboarding-art" aria-hidden="true">
+          <span>{{ onboardingSlides[onboardingIndex].icon }}</span>
+        </div>
+        <h1 class="display">{{ onboardingSlides[onboardingIndex].title }}</h1>
+        <p class="subtitle">{{ onboardingSlides[onboardingIndex].text }}</p>
+        <div class="dots" aria-label="Progresso da apresentação">
+          @for (slide of onboardingSlides; track $index) {
+          <span [class.active]="$index === onboardingIndex"></span>
+          }
+        </div>
+      </div>
+      <div class="onboarding-actions">
+        <button class="btn-text" type="button" (click)="startRegistration()">Pular</button>
+        <button class="btn btn-primary" type="button" (click)="nextOnboarding()">
+          {{ onboardingIndex === onboardingSlides.length - 1 ? 'Começar' : 'Avançar' }}
+        </button>
+      </div>
+    </section>
+    } @case ('login') {
+    <section class="screen auth-form-screen">
+      <div class="auth-heading centered">
+        <span class="icon-ring"><ng-container [ngTemplateOutlet]="pinIcon" /></span>
+        <h1>Bem-vindo de volta</h1>
+        <p class="subtitle">Entre para continuar sua trilha</p>
+      </div>
+      <form (ngSubmit)="submitAuth()">
+        <label class="field"
+          >E-mail<input
+            [(ngModel)]="authForm.email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="seuemail@exemplo.com"
+            required
+        /></label>
+        <label class="field"
+          >Senha
+          <span class="password-input"
+            ><input
+              [(ngModel)]="authForm.password"
+              name="password"
+              [type]="showPassword ? 'text' : 'password'"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              required /><button
+              type="button"
+              class="eye-button"
+              [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+              (click)="showPassword = !showPassword"
+            >
+              <ng-container [ngTemplateOutlet]="eyeIcon" /></button
+          ></span>
+        </label>
+        <button class="btn-link forgot-link" type="button" (click)="goToAuth('forgot')">Esqueci minha senha</button>
+        <ng-container [ngTemplateOutlet]="authAlerts" />
+        <button class="btn btn-primary" type="submit" [disabled]="saving">
+          {{ saving ? 'Aguarde...' : 'Entrar' }}
+        </button>
+      </form>
+      <div class="divider"><span>ou</span></div>
+      <p class="switch-text">
+        Não tem conta? <button class="btn-link" type="button" (click)="startRegistration()">Criar conta</button>
+      </p>
+    </section>
+    } @case ('register') {
+    <section class="screen auth-form-screen">
+      <button class="back-button" type="button" aria-label="Voltar" (click)="goToAuth('welcome')">
+        <ng-container [ngTemplateOutlet]="backIcon" />
+      </button>
+      <div class="auth-heading">
+        <h1>{{ authMode === 'academy' ? 'Cadastrar academia' : 'Criar conta' }}</h1>
+        <p class="subtitle">
+          {{ authMode === 'academy' ? 'Traga sua caverna para a rede' : 'Vamos começar sua jornada na Caverna' }}
+        </p>
+      </div>
+      <form (ngSubmit)="continueRegistration()">
+        <label class="field"
+          >Nome completo<input
+            [(ngModel)]="authForm.name"
+            name="name"
+            autocomplete="name"
+            placeholder="Seu nome"
+            required
+        /></label>
+        <label class="field"
+          >E-mail<input
+            [(ngModel)]="authForm.email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="seuemail@exemplo.com"
+            required
+        /></label>
+        <label class="field"
+          >Senha
+          <span class="password-input"
+            ><input
+              [(ngModel)]="authForm.password"
+              name="password"
+              [type]="showPassword ? 'text' : 'password'"
+              autocomplete="new-password"
+              placeholder="••••••••"
+              required /><button
+              type="button"
+              class="eye-button"
+              [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+              (click)="showPassword = !showPassword"
+            >
+              <ng-container [ngTemplateOutlet]="eyeIcon" /></button
+          ></span>
+        </label>
+        <span class="field-hint">Mínimo de 8 caracteres, com letras e números.</span>
+        @if (authMode === 'academy') {
+        <label class="field"
+          >Nome da academia<input
+            [(ngModel)]="authForm.gymName"
+            name="gymName"
+            placeholder="Caverna BJJ — Matriz"
+            required
+        /></label>
+        <label class="field"
+          >Endereço<input
+            [(ngModel)]="authForm.address"
+            name="address"
+            autocomplete="street-address"
+            placeholder="Bairro, cidade"
+        /></label>
+        } @else {
+        <label class="field"
+          >Código da academia<input
+            [(ngModel)]="authForm.gymId"
+            name="gymId"
+            autocomplete="off"
+            placeholder="Peça ao seu professor"
+            required
+        /></label>
+        }
+        <ng-container [ngTemplateOutlet]="authAlerts" />
+        <button class="btn btn-primary" type="submit" [disabled]="saving">
+          {{ saving ? 'Aguarde...' : authMode === 'academy' ? 'Cadastrar academia' : 'Criar conta' }}
+        </button>
+      </form>
+      <div class="divider"><span>ou</span></div>
+      <p class="switch-text">
+        Já tem conta? <button class="btn-link" type="button" (click)="goToAuth('login')">Entrar</button>
+      </p>
+      <p class="switch-text small">
+        @if (authMode === 'academy') { É aluno?
+        <button class="btn-link" type="button" (click)="startRegistration('student')">Criar conta de aluno</button>
+        } @else { Administra uma academia?
+        <button class="btn-link" type="button" (click)="startRegistration('academy')">Cadastre sua academia</button>
+        }
+      </p>
+    </section>
+    } @case ('belt-question') {
+    <section class="screen step-screen">
+      <div>
+        <h1 class="display left">Qual sua faixa atual?</h1>
+        <p class="subtitle left">Isso define por onde sua trilha começa</p>
+        <div class="choice-list">
+          <button class="choice-card" type="button" [class.selected]="graduated === false" (click)="graduated = false">
+            <b>🆕 Não tenho graduação @if (graduated === false) {<span class="tag">Selecionado</span>}</b>
+            <span>Vou começar pela aula de validação e receber minha primeira faixa lá.</span>
+          </button>
+          <button class="choice-card" type="button" [class.selected]="graduated === true" (click)="graduated = true">
+            <b>🥋 Sou graduado @if (graduated === true) {<span class="tag">Selecionado</span>}</b>
+            <span>Vou informar minha faixa e enviar meu certificado para validação.</span>
+          </button>
+        </div>
+        <ng-container [ngTemplateOutlet]="authAlerts" />
+      </div>
+      <div class="bottom-actions">
+        <button class="btn btn-primary" type="button" [disabled]="saving" (click)="continueBeltQuestion()">
+          {{ saving ? 'Aguarde...' : 'Continuar' }}
+        </button>
+        <button class="btn-text" type="button" (click)="goToAuth('register')">Voltar</button>
+      </div>
+    </section>
+    } @case ('belt-select') {
+    <section class="screen step-screen">
+      <div>
+        <h1 class="display left">Informe sua faixa</h1>
+        <p class="subtitle left narrow">Um professor homologado vai validar na sua primeira aula.</p>
+        <div class="belt-chips" role="radiogroup" aria-label="Faixa">
+          @for (belt of beltOptions; track belt.name) {
+          <button
+            type="button"
+            role="radio"
+            class="belt-chip"
+            [attr.aria-checked]="declaredBelt === belt.name"
+            [class.selected]="declaredBelt === belt.name"
+            (click)="declaredBelt = belt.name"
+          >
+            <span class="dot" [style.background]="belt.color"></span>{{ belt.name.replace('Faixa ', '') }}
+          </button>
+          }
+        </div>
+        <label class="upload-card">
+          <b>📄 Enviar certificado (opcional)</b>
+          <span>{{ certificateName || 'Toque para anexar uma foto ou PDF do seu certificado de graduação.' }}</span>
+          <input type="file" accept="image/*,application/pdf" (change)="selectCertificate($event)" />
+        </label>
+        <p class="hint-text">Sem certificado? Sem problema — o professor confirma sua faixa na aula.</p>
+        <ng-container [ngTemplateOutlet]="authAlerts" />
+      </div>
+      <div class="bottom-actions">
+        <button class="btn btn-primary" type="button" [disabled]="saving" (click)="continueBeltSelect()">
+          {{ saving ? 'Aguarde...' : 'Continuar' }}
+        </button>
+        <button class="btn-text" type="button" (click)="authStep = 'belt-question'">Voltar</button>
+      </div>
+    </section>
+    } @case ('forgot') {
+    <section class="screen auth-form-screen">
+      <button class="back-link" type="button" (click)="goToAuth('login')">
+        <ng-container [ngTemplateOutlet]="backIcon" /> Voltar para o login
+      </button>
+      <div class="auth-heading centered">
+        <span class="icon-ring"><ng-container [ngTemplateOutlet]="lockIcon" /></span>
+        <h1>Esqueceu sua senha?</h1>
+        <p class="subtitle">Informe o e-mail da sua conta para receber um link de recuperação.</p>
+      </div>
+      <form (ngSubmit)="sendPasswordReset()">
+        <label class="field"
+          >E-mail<input
+            [(ngModel)]="forgotEmail"
+            name="forgotEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="seuemail@exemplo.com"
+            required
+        /></label>
+        <ng-container [ngTemplateOutlet]="authAlerts" />
+        <button class="btn btn-primary" type="submit" [disabled]="saving">
+          {{ saving ? 'Enviando...' : 'Enviar link de recuperação' }}
+        </button>
+      </form>
+      <p class="switch-text stacked">
+        Lembrou a senha?
+        <button class="btn-link" type="button" (click)="goToAuth('login')">Voltar para o login</button>
+      </p>
+    </section>
+    } @case ('forgot-sent') {
+    <section class="screen sent-screen">
+      <span class="success-ring" aria-hidden="true">
+        <svg viewBox="0 0 48 48">
+          <path
+            d="m15 25 6 6 12-13"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <h1>Confira seu e-mail</h1>
+      <p class="subtitle">Se existir uma conta com esse e-mail, você receberá um link para redefinir sua senha.</p>
+      <button class="btn btn-primary" type="button" (click)="goToAuth('login')">Voltar para o login</button>
+      <p class="hint-text centered">Você voltará ao login automaticamente em 1 minuto.</p>
+    </section>
+    } }
+  </main>
+  } @else {
+  <div class="app-frame app-shell">
+    <main class="app-main">
+      @if (error) {
+      <div class="message error-message floating" role="alert">{{ error }}</div>
+      } @if (notice) {
+      <div class="message success-message floating" role="status">{{ notice }}</div>
+      } @if (section === 'overview') {
+      <section class="screen home-screen">
+        <h1 class="display left greeting">Olá, {{ data.user.name.split(' ')[0] }} 👋</h1>
+        <p class="subtitle left">
+          {{ isStaff ? 'Acompanhe a rotina e a evolução da sua equipe' : 'Continue evoluindo na sua trilha' }}
+        </p>
+
+        <button class="card belt-card" type="button" (click)="openTab('progress')">
+          <span class="belt-row">
+            <span class="belt-circle" [style.background]="beltColor(data.profile)"></span>
+            <span
+              ><b>{{ data.profile.beltName }}</b
+              ><small>{{ checkpoints.done }} / {{ checkpoints.total }} checkpoints</small></span
+            >
+          </span>
+          <span class="progress-track"><span [style.width.%]="checkpointPercent"></span></span>
+        </button>
+        <button class="btn-link see-all" type="button" (click)="openTab('progress')">Ver todas...</button>
+
+        @if (upcomingSessions[0]; as next) {
+        <article class="card next-class">
+          <span class="overline">Próxima aula</span>
+          <div class="next-class-main">
+            <b>{{ sessionDayLabel(next) }} ▪ {{ next.startTime }}</b><span class="tag">{{ next.className }}</span>
+          </div>
+          <div class="next-class-foot">
+            <span>{{ teacherName(next) || classLevel(next) }}</span>
+            @if (isStaff) {
+            <button class="btn btn-primary btn-small" type="button" (click)="openSchedule()">Abrir chamada</button>
+            } @else if (isPresent(next, data.user.uid)) {
+            <span class="tag success">Confirmada</span>
+            } @else {
+            <button class="btn btn-primary btn-small" type="button" (click)="openCheckIn(next)">Confirmar</button>
+            }
+          </div>
+        </article>
+        } @else {
+        <article class="card next-class">
+          <span class="overline">Próxima aula</span>
+          <p class="muted">Nenhuma aula aberta. Consulte a agenda da sua caverna.</p>
+          <div class="next-class-foot">
+            <span></span
+            ><button class="btn btn-primary btn-small" type="button" (click)="openSchedule()">Ver agenda</button>
+          </div>
+        </article>
+        }
+
+        <article class="card caverns-card">
+          <div class="caverns-head">
+            <span class="pin-icon"><ng-container [ngTemplateOutlet]="pinIcon" /></span>
+            <span><b>Cavernas mais próximas</b><small>1 academia na sua rede</small></span>
+          </div>
+          <div class="avatar-stack" aria-hidden="true">
+            <span class="blue"></span><span class="purple"></span><span class="teal"></span>
+          </div>
+          <b class="cavern-name">{{ data.gymName }}</b>
+          <div class="cavern-foot">
+            <small>{{ data.gymAddress || 'Sua caverna' }} • {{ gymOpenNow ? 'Aberta' : 'Fechada' }}</small>
+            <button class="btn-link" type="button" (click)="openCaverns()">Ver todas →</button>
+          </div>
+        </article>
+
+        @if (visibleAnnouncements.length) {
+        <article class="card">
+          <div class="card-head">
+            <b>Comunicados</b
+            ><button class="btn-link" type="button" (click)="openSection('announcements')">Ver mural →</button>
+          </div>
+          @for (item of visibleAnnouncements.slice(0, 2); track item.id) {
+          <div class="list-row">
+            <span class="list-dot"></span>
+            <div><b>{{ item.title }}</b><small>{{ item.message }}</small></div>
+          </div>
+          }
+        </article>
+        } @if (!isStaff) {
+        <button class="fab-checkin" type="button" aria-label="Abrir check-in" (click)="openCheckIn()">
+          <span>+</span><small>Check-in</small>
+        </button>
+        }
+      </section>
+      } @if (section === 'progress') {
+      <section class="screen trail-screen">
+        <button class="back-button plain" type="button" aria-label="Voltar" (click)="openTab('overview')">
+          <ng-container [ngTemplateOutlet]="backIcon" />
+        </button>
+        <h1 class="display left">Trilha de Faixas</h1>
+        <p class="subtitle left">Evolua no seu ritmo, complete os checkpoints e conquiste sua próxima faixa.</p>
+        <ol class="trail">
+          @for (belt of trailBelts; track belt.name) {
+          <li class="trail-item" [class.done]="belt.status === 'done'" [class.locked]="belt.status === 'locked'">
+            <span class="trail-dot" [class.current]="belt.status === 'current'" [style.background]="belt.color">
+              @if (belt.status === 'done') {
+              <i aria-label="Concluída">✓</i>
+              }
+            </span>
+            @if (belt.status === 'current') {
+            <div class="trail-current">
+              <b>{{ belt.name }} <span class="tag">Atual</span></b>
+              <p>{{ belt.description }}</p>
+              <small>{{ checkpoints.done }}/{{ checkpoints.total }} checkpoints</small>
+              <span class="progress-track teal"><span [style.width.%]="checkpointPercent"></span></span>
+              @if (promotionEligible) {
+              <small class="eligible">✦ Critérios atingidos. Converse com seu professor.</small>
+              }
+            </div>
+            } @else {
+            <div class="trail-info">
+              <b>{{ belt.name }}</b>
+              <span
+                >{{ belt.description }} @if (belt.status === 'done') {<span class="tag success">Concluída</span>} @else
+                {<span>• 0/{{ belt.total }}</span>}</span
+              >
+            </div>
+            @if (belt.status === 'locked') {
+            <span class="lock" aria-label="Bloqueada">🔒</span>
+            } }
+          </li>
+          }
+        </ol>
+        @if (isAdmin) {
+        <article class="card">
+          <div class="card-head"><b>Evolução dos alunos</b></div>
+          @for (member of data.members; track member.uid) { @if (member.role === 'student' && profileFor(member.uid); as
+          profile) {
+          <div class="list-row">
+            <span class="avatar">{{ member.name.slice(0, 1) }}</span>
+            <div>
+              <b>{{ member.name }} · {{ profile.beltName }}</b
+              ><small
+                >{{ profile.totalClasses }} treinos · {{ formatMinutes(profile.totalMatMinutes) }} · {{ profile.stripes
+                }}/4 graus{{ profile.declaredBeltName ? ' · declarou ' + profile.declaredBeltName : '' }}</small
+              >
+            </div>
+            @if (isEligible(profile)) {
+            <button class="btn btn-primary btn-small" [disabled]="saving" (click)="awardGraduation(member, profile)">
+              {{ profile.stripes >= 4 ? 'Promover' : 'Grau' }}
+            </button>
+            }
+          </div>
+          } } @empty {
+          <p class="muted">Nenhum aluno cadastrado ainda.</p>
+          }
+        </article>
+        }
+      </section>
+      } @if (section === 'attendance') { @switch (cavernasView) { @case ('permission') {
+      <section class="screen permission-screen">
+        <div class="radar" aria-hidden="true">
+          <span class="ring outer"></span><span class="ring middle"></span><span class="core"><i></i></span>
+        </div>
+        <h1 class="display">Permita sua localização</h1>
+        <p class="subtitle">
+          Assim encontramos as cavernas mais próximas de você automaticamente, sem precisar digitar nada.
+        </p>
+        <div class="bottom-actions">
+          <button class="btn btn-primary" type="button" (click)="requestLocation()">Permitir localização</button>
+          <button class="btn-text" type="button" (click)="skipLocation()">Agora não, prefiro buscar manualmente</button>
+        </div>
+      </section>
+      } @case ('list') {
+      <section class="screen">
+        <button class="back-button plain" type="button" aria-label="Voltar" (click)="openTab('overview')">
+          <ng-container [ngTemplateOutlet]="backIcon" />
+        </button>
+        <h1 class="display left">Encontre sua caverna</h1>
+        <p class="subtitle left">Unidades mais próximas de você</p>
+        <button class="location-label" type="button" (click)="requestLocation()">📍 {{ locationLabel }}</button>
+        <label class="search-field"
+          ><span aria-hidden="true">🔍</span
+          ><input [(ngModel)]="gymSearch" name="gymSearch" placeholder="Buscar por nome ou bairro" aria-label="Buscar"
+        /></label>
+        <div class="filter-chips">
+          <button type="button" [class.active]="gymFilter === 'near'" (click)="gymFilter = 'near'">
+            Mais próximas
+          </button>
+          <button type="button" [class.active]="gymFilter === 'open'" (click)="gymFilter = 'open'">
+            Abertas agora
+          </button>
+          <button type="button" [class.active]="gymFilter === 'today'" (click)="gymFilter = 'today'">Aulas hoje</button>
+        </div>
+        @if (gymVisible) {
+        <button class="card gym-card" type="button" (click)="openSchedule()">
+          <span class="gym-avatar">{{ gymInitials }}</span>
+          <span class="gym-info">
+            <b>{{ data.gymName }} <span class="tag">Matriz</span></b>
+            <small>{{ data.gymAddress || 'Endereço não informado' }}</small>
+            <small
+              >★ {{ data.sessions.length }} aulas •
+              <em [class.open]="gymOpenNow">{{ gymOpenNow ? 'Aberta agora' : 'Fechada' }}</em></small
+            >
+          </span>
+        </button>
+        } @else {
+        <p class="muted empty">Nenhuma caverna encontrada com esses filtros.</p>
+        }
+      </section>
+      } @case ('schedule') {
+      <section class="screen schedule-screen">
+        <button class="back-button plain" type="button" aria-label="Voltar" (click)="openCaverns()">
+          <ng-container [ngTemplateOutlet]="backIcon" />
+        </button>
+        <h1 class="display left">Escolha o dia e horário</h1>
+        <p class="subtitle left">{{ data.gymName }}</p>
+        <div class="week-nav">
+          <button type="button" aria-label="Semana anterior" (click)="shiftWeek(-1)">‹</button>
+          <div class="day-chips">
+            @for (day of weekDays; track day.key) {
+            <button type="button" [class.active]="day.key === selectedDate" (click)="selectedDate = day.key">
+              <small>{{ day.short }}</small><b>{{ day.day }}</b>
+            </button>
+            }
+          </div>
+          <button type="button" aria-label="Próxima semana" (click)="shiftWeek(1)">›</button>
+        </div>
+        <p class="date-label">{{ selectedDateLabel }}</p>
+        @for (session of sessionsForSelectedDate; track session.id) {
+        <article class="card session-card">
+          <div class="session-top">
+            <b>{{ session.startTime }} — {{ session.endTime }}</b><span class="tag">{{ session.className }}</span>
+            @if (classLevel(session) !== 'Todos') {
+            <span class="tag">{{ classLevel(session) }}</span>
+            }
+          </div>
+          <span class="muted">{{ teacherName(session) || 'Aula da caverna' }}</span>
+          <div class="session-foot">
+            <small>{{ attendanceFor(session) }} check-ins{{ session.status === 'closed' ? ' • Encerrada' : '' }}</small>
+            @if (isStaff) { @if (session.status === 'open') {
+            <span class="inline-actions">
+              <button
+                class="btn btn-outline btn-small"
+                type="button"
+                (click)="rollCallSessionId = rollCallSessionId === session.id ? '' : session.id"
+              >
+                Chamada
+              </button>
+              <button
+                class="btn btn-primary btn-small"
+                type="button"
+                [disabled]="saving"
+                (click)="closeSession(session)"
+              >
+                Encerrar
+              </button>
+            </span>
+            } } @else if (isPresent(session, data.user.uid)) {
+            <span class="tag success">Confirmado</span>
+            } @else if (session.status === 'open') {
+            <button class="btn btn-primary btn-small" type="button" (click)="openCheckIn(session)">Inscrever</button>
+            }
+          </div>
+          @if (isStaff && rollCallSessionId === session.id) {
+          <div class="roll-call">
+            @for (member of data.members; track member.uid) { @if (member.role === 'student') {
+            <button
+              class="roll-call-item"
+              type="button"
+              [disabled]="saving || isPresent(session, member.uid) || !profileFor(member.uid)"
+              (click)="recordSessionAttendance(session, member)"
+            >
+              <span>{{ member.name }}</span
+              ><small>{{ isPresent(session, member.uid) ? 'Presente ✓' : '＋ Lançar presença' }}</small>
+            </button>
+            } } @empty {
+            <p class="muted">Nenhum aluno associado.</p>
+            }
+          </div>
+          }
+        </article>
+        } @empty {
+        <p class="muted empty">Nenhuma aula neste dia.</p>
+        } @if (isStaff) {
+        <article class="card">
+          <div class="card-head"><b>Nova turma</b></div>
+          <form class="form-grid" (ngSubmit)="createClass()">
+            <label class="field"
+              >Nome da turma<input
+                [(ngModel)]="classForm.name"
+                name="className"
+                required
+                placeholder="Ex.: Trilha Azul"
+            /></label>
+            <label class="field">Modalidade<input [(ngModel)]="classForm.modality" name="modality" required /></label>
+            <label class="field">Nível<input [(ngModel)]="classForm.level" name="level" /></label>
+            <label class="field"
+              >Início<input [(ngModel)]="classForm.startTime" name="classStart" type="time" required
+            /></label>
+            <label class="field"
+              >Fim<input [(ngModel)]="classForm.endTime" name="classEnd" type="time" required
+            /></label>
+            <button class="btn btn-primary" [disabled]="saving">Criar turma</button>
+          </form>
+        </article>
+        @if (data.classes.length) {
+        <article class="card">
+          <div class="card-head"><b>Abrir aula para check-in</b></div>
+          <form class="form-grid" (ngSubmit)="createSession()">
+            <label class="field"
+              >Turma<select [(ngModel)]="sessionForm.classId" name="sessionClass" required>
+                <option value="">Selecione</option>
+                @for (item of data.classes; track item.id) {
+                <option [value]="item.id">{{ item.name }}</option>
+                }
+              </select></label
+            >
+            <label class="field"
+              >Data<input [(ngModel)]="sessionForm.date" name="sessionDate" type="date" required
+            /></label>
+            <label class="field"
+              >Início<input [(ngModel)]="sessionForm.startTime" name="sessionStart" type="time" required
+            /></label>
+            <label class="field"
+              >Fim<input [(ngModel)]="sessionForm.endTime" name="sessionEnd" type="time" required
+            /></label>
+            <button class="btn btn-primary" [disabled]="saving">Abrir check-in</button>
+          </form>
+        </article>
+        } }
+      </section>
+      } @case ('checkin') {
+      <section class="screen checkin-screen">
+        <div class="screen-title">
+          <button class="back-button" type="button" aria-label="Voltar" (click)="openSchedule()">
+            <ng-container [ngTemplateOutlet]="backIcon" />
+          </button>
+          <h1 class="display left">Realizar Check-in</h1>
+        </div>
+        @if (selectedSession; as session) {
+        <article class="card highlight-card">
+          <span class="tag orange">📍 Sua caverna</span>
+          <div class="gym-line">
+            <span class="square-icon"><ng-container [ngTemplateOutlet]="pinIcon" /></span>
+            <span><b>{{ data.gymName }}</b><small>{{ data.gymAddress || 'Endereço não informado' }}</small></span>
+          </div>
+        </article>
+        <article class="card">
+          <span class="overline">Aula do dia</span>
+          <div class="class-line">
+            <span class="belt-circle small" [style.background]="beltColor(data.profile)">🥋</span>
+            <span>
+              <b
+                >{{ session.className }}
+                <span class="tag">Checkpoint {{ checkpoints.done }}/{{ checkpoints.total }}</span></b
+              >
+              <small
+                >{{ sessionDayLabel(session, true) }} • {{ session.startTime }}{{ teacherName(session) ? ' • ' +
+                teacherName(session) : '' }}</small
+              >
+            </span>
+          </div>
+        </article>
+        <article class="card qr-card">
+          <b>Apresente na recepção para liberar a catraca</b>
+          <div class="qr" aria-label="QR Code do check-in">
+            @for (cell of qrCells(session); track $index) {
+            <span [class.on]="cell"></span>
+            }
+          </div>
+          <span class="overline">Código de validação</span>
+          <strong class="validation-code">{{ validationCode(session) }}</strong>
+        </article>
+        @if (isPresent(session, data.user.uid)) {
+        <button class="btn btn-primary" type="button" disabled>Check-in confirmado ✓</button>
+        } @else {
+        <button
+          class="btn btn-primary"
+          type="button"
+          [disabled]="saving || session.status !== 'open'"
+          (click)="checkIn(session)"
+        >
+          {{ saving ? 'Confirmando...' : session.status === 'open' ? 'Confirmar Check-in' : 'Aula encerrada' }}
+        </button>
+        } } @else {
+        <p class="muted empty">Escolha uma aula na agenda para fazer o check-in.</p>
+        <button class="btn btn-primary" type="button" (click)="openSchedule()">Ver agenda</button>
+        }
+      </section>
+      } } } @if (section === 'profile') {
+      <section class="screen profile-screen">
+        <span class="profile-avatar">{{ userInitials }}</span>
+        <h1 class="display">{{ data.user.name }}</h1>
+        <span class="tag profile-belt">{{ data.profile.beltName }}</span>
+        <div class="profile-stats">
+          <article>
+            <strong>{{ data.profile.totalMatMinutes / 60 | number: '1.0-0' }}h</strong><span>Horas</span>
+          </article>
+          <article><strong>{{ data.profile.totalClasses }}</strong><span>Aulas</span></article>
+          <article><strong>{{ weekStreak }}</strong><span>Sequência</span></article>
+        </div>
+        <nav class="menu-list" aria-label="Perfil">
+          <button type="button" (click)="openSection('edit-profile')">Editar perfil</button>
+          <button type="button" (click)="openSection('certificates')">Certificados</button>
+          <button type="button" (click)="openSection('history')">Histórico de treinos</button>
+          <button type="button" (click)="openSection('finance')">Mensalidades</button>
+          <button type="button" (click)="openSection('announcements')">Comunicados e videoaulas</button>
+          <button type="button" (click)="openSection('shop')">Loja da academia</button>
+          @if (isAdmin) {
+          <button type="button" (click)="openSection('management')">Gestão da academia</button>
+          }
+          <button type="button" (click)="openSection('settings')">Configurações</button>
+        </nav>
+      </section>
+      } @if (section !== 'overview' && section !== 'progress' && section !== 'attendance' && section !== 'profile') {
+      <section class="screen sub-screen">
+        <div class="screen-title">
+          <button class="back-button" type="button" aria-label="Voltar" (click)="openTab('profile')">
+            <ng-container [ngTemplateOutlet]="backIcon" />
+          </button>
+          <h1 class="display left">
+            {{ section === 'edit-profile' ? 'Editar perfil' : section === 'certificates' ? 'Certificados' : section ===
+            'settings' ? 'Configurações' : section === 'history' ? 'Histórico de treinos' : section === 'finance' ?
+            'Mensalidades' : section === 'announcements' ? 'Comunicados' : section === 'shop' ? 'Loja da academia' :
+            'Gestão' }}
+          </h1>
+        </div>
+
+        @if (section === 'edit-profile') {
+        <form class="card form-grid" (ngSubmit)="saveProfileName()">
+          <label class="field">Nome completo<input [(ngModel)]="editName" name="editName" required /></label>
+          <label class="field">E-mail<input [value]="data.user.email" name="editEmail" disabled /></label>
+          <button class="btn btn-primary" [disabled]="saving">Salvar</button>
+        </form>
+        } @if (section === 'certificates') {
+        <article class="card">
+          @for (item of data.graduations; track item.id) {
+          <div class="list-row">
+            <span class="list-icon">◆</span>
+            <div>
+              <b>{{ item.type === 'belt' ? item.beltName : 'Grau ' + item.stripes + ' · ' + item.beltName }}</b
+              ><small>{{ item.awardedAt | date: 'dd/MM/yyyy' }}{{ item.reason ? ' · ' + item.reason : '' }}</small>
+            </div>
+          </div>
+          } @empty {
+          <p class="muted">Suas graduações homologadas aparecerão aqui.</p>
+          } @if (data.profile.declaredBeltName) {
+          <p class="hint-text">
+            Faixa declarada no cadastro: {{ data.profile.declaredBeltName }} (aguardando validação).
+          </p>
+          }
+        </article>
+        } @if (section === 'settings') {
+        <article class="card">
+          <div class="list-row">
+            <div><b>Academia</b><small>{{ data.gymName }}</small></div>
+          </div>
+          <div class="list-row">
+            <div><b>Código da academia</b><small class="selectable">{{ data.user.gymId }}</small></div>
+          </div>
+          <div class="list-row">
+            <div><b>Localização</b><small>{{ locationLabel || 'Não configurada' }}</small></div>
+            <button class="btn btn-outline btn-small" type="button" (click)="requestLocation()">Atualizar</button>
+          </div>
+        </article>
+        <button class="btn btn-outline danger" type="button" (click)="logout()">Sair da conta</button>
+        } @if (section === 'history') {
+        <article class="card">
+          @for (attendance of (isStaff ? data.attendances : myAttendances).slice(0, 30); track attendance.id) {
+          <div class="list-row">
+            <span class="list-icon green">✓</span>
+            <div>
+              <b>{{ attendance.studentName || 'Presença confirmada' }}</b
+              ><small>{{ attendance.sessionDate }} · {{ formatMinutes(attendance.minutes) }}</small>
+            </div>
+            <span class="tag">{{ attendance.source === 'teacher' ? 'Professor' : 'Check-in' }}</span>
+          </div>
+          } @empty {
+          <p class="muted">Seu histórico de treinos aparecerá aqui.</p>
+          }
+        </article>
+        } @if (section === 'finance') { @if (!isStaff && data.profile.financialStatus !== 'current') {
+        <div class="message error-message">
+          Há uma mensalidade pendente. Fale com a administração da academia para regularizar.
+        </div>
+        } @if (isAdmin) {
+        <article class="card">
+          <div class="card-head"><b>Registrar mensalidade</b></div>
+          <form class="form-grid" (ngSubmit)="createPayment()">
+            <label class="field"
+              >Aluno<select [(ngModel)]="paymentForm.userId" name="paymentUser" required>
+                <option value="">Selecione</option>
+                @for (member of data.members; track member.uid) { @if (member.role === 'student') {
+                <option [value]="member.uid">{{ member.name }}</option>
+                } }
+              </select></label
+            >
+            <label class="field"
+              >Mês de referência<input
+                [(ngModel)]="paymentForm.referenceMonth"
+                name="referenceMonth"
+                type="month"
+                required
+            /></label>
+            <label class="field"
+              >Vencimento<input [(ngModel)]="paymentForm.dueDate" name="dueDate" type="date" required
+            /></label>
+            <label class="field"
+              >Valor (R$)<input
+                [(ngModel)]="paymentForm.amount"
+                name="amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                required
+            /></label>
+            <label class="field"
+              >Método<select [(ngModel)]="paymentForm.method" name="method">
+                <option>PIX</option>
+                <option>Dinheiro</option>
+                <option>Cartão (registrar manualmente)</option>
+              </select></label
+            >
+            <button class="btn btn-primary" [disabled]="saving">Lançar cobrança</button>
+          </form>
+        </article>
+        }
+        <article class="card">
+          @for (payment of paymentsWithCurrentStatus; track payment.id) {
+          <div class="list-row">
+            <span class="list-icon" [class.green]="payment.status === 'paid'"
+              >{{ payment.status === 'paid' ? '✓' : '$' }}</span
+            >
+            <div>
+              <b>{{ payment.studentName }} · {{ payment.referenceMonth }}</b
+              ><small
+                >{{ formatMoney(payment.amount) }} · vence {{ payment.dueDate | date: 'dd/MM/yyyy' }} · {{
+                payment.method }}</small
+              >
+            </div>
+            @if (isAdmin && payment.status !== 'paid') {
+            <button class="btn btn-primary btn-small" [disabled]="saving" (click)="markPaid(payment)">Pago</button>
+            } @else {
+            <span class="tag" [class.success]="payment.status === 'paid'" [class.orange]="payment.status !== 'paid'"
+              >{{ payment.status === 'paid' ? 'Pago' : payment.status === 'overdue' ? 'Em atraso' : 'Pendente' }}</span
+            >
+            }
+          </div>
+          } @empty {
+          <p class="muted">Nenhuma mensalidade registrada.</p>
+          }
+        </article>
+        <p class="hint-text">
+          Os pagamentos são lançamentos administrativos; cobranças via PIX/cartão ainda não são processadas pelo
+          aplicativo.
+        </p>
+        } @if (section === 'announcements') { @if (isStaff) {
+        <article class="card">
+          <div class="card-head"><b>Publicar comunicado</b></div>
+          <form class="form-grid" (ngSubmit)="publishAnnouncement()">
+            <label class="field"
+              >Título<input [(ngModel)]="announcementForm.title" name="announcementTitle" required
+            /></label>
+            <label class="field"
+              >Público<select [(ngModel)]="announcementForm.audience" name="audience">
+                <option value="all">Toda a academia</option>
+                <option value="students">Alunos</option>
+                <option value="staff">Equipe</option>
+              </select></label
+            >
+            <label class="field full"
+              >Mensagem<textarea
+                [(ngModel)]="announcementForm.message"
+                name="announcementMessage"
+                rows="3"
+                required
+              ></textarea>
+            </label>
+            <button class="btn btn-primary" [disabled]="saving">Publicar aviso</button>
+          </form>
+        </article>
+        <article class="card">
+          <div class="card-head"><b>Compartilhar videoaula</b></div>
+          <form class="form-grid" (ngSubmit)="publishVideo()">
+            <label class="field">Título<input [(ngModel)]="videoForm.title" name="videoTitle" required /></label>
+            <label class="field full"
+              >Descrição<textarea [(ngModel)]="videoForm.description" name="videoDescription" rows="2"></textarea>
+            </label>
+            <label class="field full"
+              >Link HTTPS<input
+                [(ngModel)]="videoForm.url"
+                name="videoUrl"
+                type="url"
+                placeholder="https://..."
+                required
+            /></label>
+            <button class="btn btn-primary" [disabled]="saving">Publicar videoaula</button>
+          </form>
+        </article>
+        }
+        <article class="card">
+          <div class="card-head"><b>Videoaulas</b></div>
+          @for (video of data.trainingVideos; track video.id) { @if (video.active) {
+          <div class="list-row">
+            <span class="list-icon">▶</span>
+            <div><b>{{ video.title }}</b><small>{{ video.description }}</small></div>
+            <a class="btn btn-outline btn-small" [href]="video.url" target="_blank" rel="noopener noreferrer"
+              >Assistir</a
+            >
+          </div>
+          } } @empty {
+          <p class="muted">Nenhuma videoaula publicada.</p>
+          }
+        </article>
+        @for (item of visibleAnnouncements; track item.id) {
+        <article class="card announcement-card">
+          <span class="overline"
+            >{{ item.audience === 'all' ? 'Todos' : item.audience === 'students' ? 'Alunos' : 'Equipe' }}</span
+          >
+          <b>{{ item.title }}</b>
+          <p>{{ item.message }}</p>
+          <small>{{ item.publishedAt | date: 'dd/MM/yyyy · HH:mm' }}</small>
+        </article>
+        } @empty {
+        <p class="muted empty">Nenhum comunicado publicado.</p>
+        }
+        <p class="hint-text">
+          Os comunicados aparecem no mural do app. O envio de push requer configuração do Firebase Cloud Messaging e
+          serviço de envio.
+        </p>
+        } @if (section === 'shop') { @if (isAdmin) {
+        <article class="card">
+          <div class="card-head"><b>Adicionar produto</b></div>
+          <form class="form-grid" (ngSubmit)="createProduct()">
+            <label class="field">Produto<input [(ngModel)]="productForm.name" name="productName" required /></label>
+            <label class="field"
+              >Categoria<input [(ngModel)]="productForm.category" name="productCategory" required
+            /></label>
+            <label class="field"
+              >Preço (R$)<input
+                [(ngModel)]="productForm.price"
+                name="productPrice"
+                type="number"
+                min="0.01"
+                step="0.01"
+                required
+            /></label>
+            <label class="field"
+              >Estoque<input [(ngModel)]="productForm.stock" name="productStock" type="number" min="0" required
+            /></label>
+            <button class="btn btn-primary" [disabled]="saving">Adicionar produto</button>
+          </form>
+        </article>
+        }
+        <div class="product-grid">
+          @for (product of data.products; track product.id) { @if (product.active) {
+          <article class="card product-card">
+            <span class="overline">{{ product.category }}</span>
+            <b>{{ product.name }}</b>
+            <div class="product-bottom">
+              <strong>{{ formatMoney(product.price) }}</strong><small>{{ product.stock }} disponíveis</small>
+            </div>
+            @if (!isStaff && product.stock > 0) {
+            <label class="field"
+              >Quantidade<input
+                [(ngModel)]="quantities[product.id]"
+                [name]="'quantity-' + product.id"
+                type="number"
+                min="0"
+                [max]="product.stock"
+            /></label>
+            }
+          </article>
+          } } @empty {
+          <p class="muted empty">A loja ainda não tem produtos cadastrados.</p>
+          }
+        </div>
+        @if (!isStaff && data.products.length) {
+        <button class="btn btn-primary" [disabled]="saving" (click)="requestOrder()">Enviar pedido à academia</button>
+        }
+        <p class="hint-text">
+          O pedido é enviado à academia para confirmação; o pagamento e a baixa de estoque são combinados
+          presencialmente.
+        </p>
+        @if (data.orders.length) {
+        <article class="card">
+          <div class="card-head"><b>{{ isStaff ? 'Pedidos recebidos' : 'Meus pedidos' }}</b></div>
+          @for (order of data.orders; track order.id) {
+          <div class="list-row">
+            <span class="list-icon">◇</span>
+            <div>
+              <b>Pedido {{ order.id.slice(0, 7) }}</b
+              ><small
+                >{{ order.items.length }} itens · {{ order.status === 'requested' ? 'Aguardando confirmação' :
+                order.status === 'accepted' ? 'Aceito' : 'Cancelado' }}</small
+              >
+            </div>
+            <strong>{{ formatMoney(order.total) }}</strong>
+          </div>
+          }
+        </article>
+        } } @if (section === 'management' && isAdmin) {
+        <article class="card">
+          <div class="card-head"><b>Critérios de graduação</b></div>
+          <p class="muted">Cadastre cada faixa em ordem. O mínimo de treinos define os checkpoints da trilha.</p>
+          <form class="form-grid" (ngSubmit)="createBeltCriteria()">
+            <label class="field"
+              >Nome da faixa<input [(ngModel)]="beltForm.name" name="beltName" required placeholder="Ex.: Faixa Azul"
+            /></label>
+            <label class="field"
+              >Ordem<input [(ngModel)]="beltForm.order" name="beltOrder" type="number" min="0" required
+            /></label>
+            <label class="field">Cor<input [(ngModel)]="beltForm.colorHex" name="beltColor" type="color" /></label>
+            <label class="field"
+              >Mínimo de meses<input [(ngModel)]="beltForm.minMonths" name="beltMonths" type="number" min="0"
+            /></label>
+            <label class="field"
+              >Checkpoints (treinos)<input [(ngModel)]="beltForm.minClasses" name="beltClasses" type="number" min="0"
+            /></label>
+            <label class="field"
+              >Minutos no tatame<input [(ngModel)]="beltForm.minMatMinutes" name="beltMinutes" type="number" min="0"
+            /></label>
+            <button class="btn btn-primary" [disabled]="saving">Salvar critérios</button>
+          </form>
+          @for (belt of data.belts; track belt.id) {
+          <div class="list-row">
+            <span class="belt-circle tiny" [style.background]="belt.colorHex"></span>
+            <div>
+              <b>{{ belt.name }}</b
+              ><small
+                >Ordem {{ belt.order }} · {{ belt.minMonths }} meses · {{ belt.minClasses }} treinos · {{
+                formatMinutes(belt.minMatMinutes) }}</small
+              >
+            </div>
+          </div>
+          }
+        </article>
+        <article class="card">
+          <div class="card-head"><b>Membros da academia</b><span class="tag">{{ studentCount }} alunos</span></div>
+          @for (member of data.members; track member.uid) { @if (member.role !== 'admin') {
+          <div class="list-row">
+            <span class="avatar">{{ member.name.slice(0, 1) }}</span>
+            <div>
+              <b>{{ member.name }}</b
+              ><small>{{ member.email }} · {{ profileFor(member.uid)?.beltName ?? 'Equipe' }}</small>
+            </div>
+            <select
+              class="role-select"
+              [ngModel]="member.role"
+              (ngModelChange)="updateMemberRole(member, $event)"
+              [name]="'role-' + member.uid"
+              aria-label="Perfil do membro"
+            >
+              <option value="student">Aluno</option>
+              <option value="teacher">Professor</option>
+            </select>
+          </div>
+          } } @empty {
+          <p class="muted">Nenhum aluno associado.</p>
+          }
+        </article>
+        }
+      </section>
+      }
+    </main>
+
+    <nav class="tabbar" aria-label="Navegação principal">
+      <button type="button" [class.active]="activeTab === 'overview'" (click)="openTab('overview')">
+        <span class="tab-dot"></span>Início
+      </button>
+      <button type="button" [class.active]="activeTab === 'progress'" (click)="openTab('progress')">
+        <span class="tab-dot"></span>Trilha
+      </button>
+      <button type="button" [class.active]="activeTab === 'attendance'" (click)="openCaverns()">
+        <span class="tab-dot"></span>Cavernas
+      </button>
+      <button type="button" [class.active]="activeTab === 'profile'" (click)="openTab('profile')">
+        <span class="tab-dot"></span>Perfil
+      </button>
+    </nav>
+  </div>
+  }
 </ion-content>

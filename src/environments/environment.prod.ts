@@ -7,5 +7,5 @@ export const environment = {
     storageBucket: 'caverna-jiujitsu.firebasestorage.app',
     messagingSenderId: '642123293874',
     appId: '1:642123293874:web:ca3399e3bd6194dfa095ab',
-  }
+  },
 };
